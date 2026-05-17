@@ -1,7 +1,14 @@
+export type VideoStatus = "available" | "private" | "deleted";
+
 export interface VideoEntry {
   videoId: string;
   title: string;
   downloaded: boolean;
+  status?: VideoStatus;
+}
+
+export function isAvailable(v: VideoEntry): boolean {
+  return !v.status || v.status === "available";
 }
 
 export interface PlaylistEntry {

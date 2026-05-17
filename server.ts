@@ -1,6 +1,7 @@
 import { extractPlaylistId, fetchPlaylistItems, fetchPlaylistTitle } from "./youtube.ts";
 import {
   downloadVideo,
+  isAvailable,
   loadState,
   saveState,
   type PlaylistEntry,
@@ -118,6 +119,7 @@ async function addPlaylist(
       videoId: v.videoId,
       title: v.title,
       downloaded: false,
+      status: v.status === "available" ? undefined : v.status,
     })),
   };
 
@@ -137,7 +139,9 @@ async function downloadPlaylist(
     return new Response("Playlist not found", { status: 404, headers });
   }
 
-  const pending = playlist.videos.filter((v) => !v.downloaded);
+  const pending = playlist.videos.filter(
+    (v) => !v.downloaded && isAvailable(v),
+  );
   const results: Array<{
     videoId: string;
     title: string;
@@ -151,6 +155,8 @@ async function downloadPlaylist(
     results.push({ videoId: video.videoId, title: video.title, success });
     await saveState(playlists);
   }
+
+  console.log(`Skipped ${playlist.videos.length - pending.length - results.length} unavailable videos`);
 
   return Response.json({ playlistId, results }, { headers });
 }
@@ -180,7 +186,7 @@ async function updateAllVideos(
     return new Response("Playlist not found", { status: 404, headers });
   }
   for (const video of playlist.videos) {
-    video.downloaded = downloaded;
+    if (isAvailable(video)) video.downloaded = downloaded;
   }
   await saveState(playlists);
   return Response.json(playlist, { headers });
@@ -199,6 +205,12 @@ async function toggleVideo(
   const video = playlist.videos.find((v) => v.videoId === videoId);
   if (!video) {
     return new Response("Video not found", { status: 404, headers });
+  }
+  if (!isAvailable(video)) {
+    return new Response("Cannot toggle unavailable video", {
+      status: 400,
+      headers,
+    });
   }
   video.downloaded = !video.downloaded;
   await saveState(playlists);

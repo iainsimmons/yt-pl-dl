@@ -54,6 +54,8 @@
   }
   .video-item .indicator.done { background: #34a853; color: #fff; }
   .video-item .indicator.pending { background: #dadce0; }
+  .video-item .indicator.unavailable { background: #e8eaed; cursor: default; }
+  .video-item.unavailable { color: #999; font-style: italic; }
   .error { color: #d93025; margin-bottom: 12px; }
   .empty { color: #666; text-align: center; padding: 32px 0; }
 </style>
@@ -88,7 +90,9 @@ function renderPlaylists(playlists) {
     return;
   }
 
-  playlistsEl.innerHTML = playlists.map(p => `
+  playlistsEl.innerHTML = playlists.map(p => {
+    const availableCount = p.videos.filter(v => !v.downloaded && isAvailable(v)).length;
+    return `
     <div class="playlist" data-id="${p.id}">
       <div class="playlist-header">
         <span class="playlist-title">${esc(p.title)}</span>
@@ -97,7 +101,7 @@ function renderPlaylists(playlists) {
             Mark All Undownloaded
           </button>
           <button class="dl-btn" data-action="download" data-id="${p.id}">
-            Download All (${p.videos.filter(v => !v.downloaded).length})
+            Download All (${availableCount})
           </button>
           <button class="del-btn" data-action="delete" data-id="${p.id}">
             Delete
@@ -105,18 +109,23 @@ function renderPlaylists(playlists) {
         </div>
       </div>
       <ul class="video-list">
-        ${p.videos.map(v => `
-          <li class="video-item">
-            <span class="indicator ${v.downloaded ? 'done' : 'pending'}"
-                  data-action="toggle" data-playlist="${p.id}" data-video="${v.videoId}">
-              ${v.downloaded ? '✓' : ''}
+        ${p.videos.map(v => {
+          const unavailable = !isAvailable(v);
+          const indicatorClass = unavailable ? 'unavailable' : (v.downloaded ? 'done' : 'pending');
+          const label = unavailable ? '—' : (v.downloaded ? '✓' : '');
+          const titleSuffix = v.status === 'private' ? ' (Private)' : v.status === 'deleted' ? ' (Deleted)' : '';
+          return `
+          <li class="video-item ${unavailable ? 'unavailable' : ''}">
+            <span class="indicator ${indicatorClass}"
+                  ${unavailable ? '' : `data-action="toggle" data-playlist="${p.id}" data-video="${v.videoId}"`}>
+              ${label}
             </span>
-            <span>${esc(v.title)}</span>
-          </li>
-        `).join("")}
+            <span>${esc(v.title)}${titleSuffix}</span>
+          </li>`;
+        }).join("")}
       </ul>
-    </div>
-  `).join("");
+    </div>`;
+  }).join("");
 
   attachListeners();
 }
@@ -182,6 +191,10 @@ function attachListeners() {
       await refresh();
     });
   });
+}
+
+function isAvailable(v) {
+  return !v.status || v.status === "available";
 }
 
 function esc(s) {

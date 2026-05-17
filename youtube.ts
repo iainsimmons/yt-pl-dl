@@ -1,8 +1,17 @@
 const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
 
+export type VideoStatus = "available" | "private" | "deleted";
+
 export interface PlaylistItem {
   videoId: string;
   title: string;
+  status: VideoStatus;
+}
+
+function detectStatus(title: string): VideoStatus {
+  if (title === "Private video") return "private";
+  if (title === "Deleted video") return "deleted";
+  return "available";
 }
 
 export function extractPlaylistId(url: string): string | null {
@@ -48,9 +57,11 @@ export async function fetchPlaylistItems(
 
     const data = await res.json();
     for (const item of data.items ?? []) {
+      const title = item.snippet.title;
       items.push({
         videoId: item.snippet.resourceId.videoId,
-        title: item.snippet.title,
+        title,
+        status: detectStatus(title),
       });
     }
 

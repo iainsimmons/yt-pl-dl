@@ -2,12 +2,12 @@
   {
     "id": "PLYn1ziFYjknf1b2hIM9I0739K6L_YiSlC",
     "title": "Children’s class",
-    "url": "https://youtube.com/playlist?list=PLYn1ziFYjknf1b2hIM9I0739K6L_YiSlC&si=EdOS65alPPQfxz51",
+    "url": "https://youtube.com/playlist?list=PLYn1ziFYjknf1b2hIM9I0739K6L_YiSlC",
     "videos": [
       {
         "videoId": "Q7ALZOSS7Fw",
         "title": "[FREE] BEST RAP FREESTYLE BATTLE INSTRUMENTAL BEAT",
-        "downloaded": false
+        "downloaded": true
       },
       {
         "videoId": "S6hXns8yZic",
@@ -92,7 +92,8 @@
       {
         "videoId": "xkeNAqvwQeA",
         "title": "Private video",
-        "downloaded": false
+        "downloaded": false,
+        "status": "private"
       },
       {
         "videoId": "NcRFWBO8COI",
@@ -262,7 +263,8 @@
       {
         "videoId": "sFjycoXZPMI",
         "title": "Deleted video",
-        "downloaded": false
+        "downloaded": false,
+        "status": "deleted"
       },
       {
         "videoId": "r9dZIMe9jng",
