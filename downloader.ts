@@ -20,6 +20,26 @@ export interface PlaylistEntry {
 
 const STATE_FILE = "playlists.json";
 
+export function sanitizeFilename(s: string): string {
+  return s
+    .replace(/\s+/g, "_")
+    .replace(/[^a-zA-Z0-9_-]/g, "-")
+    .replace(/[-_]{2,}/g, "_")
+    .replace(/^[-_]+|[-_]+$/g, "");
+}
+
+export function buildFilename(
+  playlistTitle: string,
+  videoTitle: string,
+  videoId: string,
+  index: number,
+): string {
+  const p = sanitizeFilename(playlistTitle);
+  const t = sanitizeFilename(videoTitle);
+  const i = String(index + 1).padStart(3, "0");
+  return `${p}_${i}_${t}_${videoId}.%(ext)s`;
+}
+
 export async function loadState(): Promise<PlaylistEntry[]> {
   try {
     return JSON.parse(await Deno.readTextFile(STATE_FILE));
@@ -37,9 +57,13 @@ export async function saveState(
 export async function downloadVideo(
   videoId: string,
   title: string,
+  playlistTitle: string,
+  index: number,
 ): Promise<boolean> {
   const downloadsDir = `${Deno.env.get("HOME")}/Downloads`;
   const url = `https://www.youtube.com/watch?v=${videoId}`;
+  const outputName = buildFilename(playlistTitle, title, videoId, index);
+  const outputPath = `${downloadsDir}/${outputName}`;
 
   const cmd = new Deno.Command("yt-dlp", {
     args: [
@@ -47,8 +71,9 @@ export async function downloadVideo(
       "--audio-format",
       "mp3",
       "-o",
-      `${downloadsDir}/%(title)s.%(ext)s`,
+      outputPath,
       "--no-playlist",
+      "--embed-thumbnail",
       url,
     ],
     stdout: "inherit",

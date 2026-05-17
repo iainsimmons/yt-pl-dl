@@ -14,9 +14,10 @@ A Deno-powered web app that fetches YouTube playlists via the YouTube Data API v
 1. You paste a YouTube playlist URL into the web UI and click **Add Playlist**.
 2. The server calls the YouTube Data API to fetch all videos in the playlist and saves them to `playlists.json`.
 3. Click **Download All** — the server runs `yt-dlp -x --audio-format mp3` for each undownloaded video, saving MP3s to `~/Downloads/`.
-4. The `downloaded` boolean in `playlists.json` is set to `true` after each successful download.
-5. You can also toggle the downloaded state manually, reset an entire playlist, or delete a playlist.
-6. Private and deleted videos are detected automatically from the YouTube API response and marked with `"status": "private"` or `"status": "deleted"` — they are grayed out in the UI, skipped during download, and cannot be toggled.
+4. The `downloaded` boolean in `playlists.json` is set to `true` after each successful download — the frontend polls the API every 2 seconds to show progress in real time, ticking off checkmarks as each video completes.
+5. MP3 files are saved with the format `{PlaylistName}_{index:03d}_{Title}_{videoId}.mp3`. Spaces become underscores; other non-alphanumeric characters become hyphens; consecutive runs of hyphens/underscores collapse to a single underscore (e.g. `Select_Lectures_001_Deep_Learning_State_of_the_Art_2020_0VH1Lim8gL8.mp3`).
+6. You can also toggle the downloaded state manually, reset an entire playlist, or delete a playlist.
+7. Private and deleted videos are detected automatically from the YouTube API response and marked with `"status": "private"` or `"status": "deleted"` — they are grayed out in the UI, skipped during download, and cannot be toggled.
 
 ## Project structure
 
@@ -27,6 +28,7 @@ youtube/
 ├── youtube.ts         # YouTube Data API v3 helpers
 ├── downloader.ts      # yt-dlp wrapper + JSON state management
 ├── index.html         # SPA frontend
+├── rename-files.ts    # One-time migration script for old filenames
 ├── playlists.json     # Persistent state (auto-created)
 ├── ytdl.sh            # Convenience launcher script
 └── .env               # Your YouTube API key (ignored by git)

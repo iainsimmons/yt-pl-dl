@@ -150,7 +150,13 @@ async function downloadPlaylist(
 
   for (const video of pending) {
     console.log(`Downloading: ${video.title}`);
-    const success = await downloadVideo(video.videoId, video.title);
+    const idx = playlist.videos.indexOf(video);
+    const success = await downloadVideo(
+      video.videoId,
+      video.title,
+      playlist.title,
+      idx,
+    );
     video.downloaded = success;
     results.push({ videoId: video.videoId, title: video.title, success });
     await saveState(playlists);

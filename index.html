@@ -137,12 +137,23 @@ function attachListeners() {
       btn.disabled = true;
       btn.textContent = "Downloading...";
       errorEl.textContent = "";
+
+      // Poll for progress updates (reads downloaded flags from server
+      // which are saved after each individual video completes)
+      const poll = setInterval(async () => {
+        try {
+          await updateProgress(pid);
+        } catch {}
+      }, 2000);
+
       try {
         const res = await fetch(`/api/playlists/${pid}/download`, { method: "POST" });
         if (!res.ok) throw new Error(await res.text());
       } catch (e) {
         errorEl.textContent = `Download failed: ${e.message}`;
       }
+
+      clearInterval(poll);
       await refresh();
     });
   });
@@ -195,6 +206,41 @@ function attachListeners() {
 
 function isAvailable(v) {
   return !v.status || v.status === "available";
+}
+
+// During a bulk download, poll the server and update indicator DOM
+// in-place without a full re-render (so the download handler stays alive).
+async function updateProgress(pid) {
+  const playlists = await loadPlaylists();
+  const pl = playlists.find(p => p.id === pid);
+  if (!pl) return;
+
+  pl.videos.forEach(v => {
+    const el = document.querySelector(
+      `[data-action="toggle"][data-playlist="${pid}"][data-video="${v.videoId}"]`,
+    );
+    if (!el) return;
+    if (v.downloaded) {
+      el.className = "indicator done";
+      el.textContent = "✓";
+    } else if (!isAvailable(v)) {
+      el.className = "indicator unavailable";
+      el.textContent = "—";
+    } else {
+      el.className = "indicator pending";
+      el.textContent = "";
+    }
+  });
+
+  const btn = document.querySelector(`[data-action="download"][data-id="${pid}"]`);
+  if (btn) {
+    const remaining = pl.videos.filter(v => !v.downloaded && isAvailable(v)).length;
+    if (remaining > 0) {
+      btn.textContent = `Downloading... (${remaining} left)`;
+    } else {
+      btn.textContent = `Downloading... (finishing)`;
+    }
+  }
 }
 
 function esc(s) {
