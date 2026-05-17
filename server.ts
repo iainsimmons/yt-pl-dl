@@ -1,5 +1,6 @@
 import { extractPlaylistId, fetchPlaylistItems, fetchPlaylistTitle } from "./youtube.ts";
 import {
+  canToggle,
   downloadVideo,
   isAvailable,
   loadState,
@@ -36,9 +37,7 @@ async function handler(req: Request): Promise<Response> {
       }
     }
 
-    const downloadMatch = pathname.match(
-      /^\/api\/playlists\/([^/]+)\/download$/,
-    );
+    const downloadMatch = pathname.match(/^\/api\/playlists\/([^/]+)\/download$/);
     if (downloadMatch && method === "POST") {
       return await downloadPlaylist(downloadMatch[1], corsHeaders);
     }
@@ -48,23 +47,15 @@ async function handler(req: Request): Promise<Response> {
       return await deletePlaylist(deleteMatch[1], corsHeaders);
     }
 
-    const allVideosMatch = pathname.match(
-      /^\/api\/playlists\/([^/]+)\/videos$/,
-    );
+    const allVideosMatch = pathname.match(/^\/api\/playlists\/([^/]+)\/videos$/);
     if (allVideosMatch && method === "PATCH") {
       const { downloaded } = await req.json();
       return await updateAllVideos(allVideosMatch[1], downloaded, corsHeaders);
     }
 
-    const singleVideoMatch = pathname.match(
-      /^\/api\/playlists\/([^/]+)\/videos\/([^/]+)$/,
-    );
+    const singleVideoMatch = pathname.match(/^\/api\/playlists\/([^/]+)\/videos\/([^/]+)$/);
     if (singleVideoMatch && method === "PATCH") {
-      return await toggleVideo(
-        singleVideoMatch[1],
-        singleVideoMatch[2],
-        corsHeaders,
-      );
+      return await toggleVideo(singleVideoMatch[1], singleVideoMatch[2], corsHeaders);
     }
 
     if (pathname === "/") {
@@ -139,9 +130,25 @@ async function downloadPlaylist(
     return new Response("Playlist not found", { status: 404, headers });
   }
 
-  const pending = playlist.videos.filter(
-    (v) => !v.downloaded && isAvailable(v),
-  );
+  const skipped: Array<{ title: string; reason: string }> = [];
+  const pending = playlist.videos.filter((v) => {
+    if (v.downloaded) return false;
+    if (isAvailable(v)) return true;
+    const reason =
+      v.status === "private"
+        ? "private video"
+        : v.status === "deleted"
+          ? "deleted video"
+          : v.status === "error"
+            ? "previous error (toggle to retry)"
+            : "unavailable";
+    skipped.push({ title: v.title, reason });
+    return false;
+  });
+  for (const s of skipped) {
+    console.log(`Skipping ${s.title} (${s.reason})`);
+  }
+
   const results: Array<{
     videoId: string;
     title: string;
@@ -151,18 +158,24 @@ async function downloadPlaylist(
   for (const video of pending) {
     console.log(`Downloading: ${video.title}`);
     const idx = playlist.videos.indexOf(video);
-    const success = await downloadVideo(
-      video.videoId,
-      video.title,
-      playlist.title,
-      idx,
-    );
-    video.downloaded = success;
-    results.push({ videoId: video.videoId, title: video.title, success });
+    const result = await downloadVideo(video.videoId, video.title, playlist.title, idx);
+    if (result.success) {
+      console.log(`Finished: ${video.title}`);
+      video.downloaded = true;
+      video.status = undefined;
+      video.errorMessage = undefined;
+    } else {
+      console.log(`Error: ${video.title} — ${result.errorMessage}`);
+      video.status = "error";
+      video.errorMessage = result.errorMessage;
+    }
+    results.push({
+      videoId: video.videoId,
+      title: video.title,
+      success: result.success,
+    });
     await saveState(playlists);
   }
-
-  console.log(`Skipped ${playlist.videos.length - pending.length - results.length} unavailable videos`);
 
   return Response.json({ playlistId, results }, { headers });
 }
@@ -192,7 +205,13 @@ async function updateAllVideos(
     return new Response("Playlist not found", { status: 404, headers });
   }
   for (const video of playlist.videos) {
-    if (isAvailable(video)) video.downloaded = downloaded;
+    if (canToggle(video)) {
+      video.downloaded = downloaded;
+      if (downloaded === false && video.status === "error") {
+        video.status = undefined;
+        video.errorMessage = undefined;
+      }
+    }
   }
   await saveState(playlists);
   return Response.json(playlist, { headers });
@@ -212,21 +231,23 @@ async function toggleVideo(
   if (!video) {
     return new Response("Video not found", { status: 404, headers });
   }
-  if (!isAvailable(video)) {
+  if (!canToggle(video)) {
     return new Response("Cannot toggle unavailable video", {
       status: 400,
       headers,
     });
   }
-  video.downloaded = !video.downloaded;
+  if (video.status === "error") {
+    video.status = undefined;
+    video.errorMessage = undefined;
+  } else {
+    video.downloaded = !video.downloaded;
+  }
   await saveState(playlists);
   return Response.json(video, { headers });
 }
 
-async function serveFile(
-  filename: string,
-  contentType: string,
-): Promise<Response> {
+async function serveFile(filename: string, contentType: string): Promise<Response> {
   try {
     const content = await Deno.readTextFile(filename);
     return new Response(content, {

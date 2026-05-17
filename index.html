@@ -1,98 +1,235 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>YouTube Playlist Downloader</title>
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: #f5f5f5; color: #222; line-height: 1.5; padding: 24px;
-  }
-  .container { max-width: 720px; margin: 0 auto; }
-  h1 { font-size: 1.5rem; margin-bottom: 16px; }
-  .add-form { display: flex; gap: 8px; margin-bottom: 24px; }
-  .add-form input {
-    flex: 1; padding: 10px 12px; font-size: 1rem;
-    border: 1px solid #ccc; border-radius: 6px;
-  }
-  .add-form button, .dl-btn {
-    padding: 10px 20px; font-size: 1rem; border: none;
-    border-radius: 6px; background: #1a73e8; color: #fff;
-    cursor: pointer; white-space: nowrap;
-  }
-  .add-form button:hover, .dl-btn:hover { background: #1557b0; }
-  .add-form button:disabled, .dl-btn:disabled {
-    background: #999; cursor: not-allowed;
-  }
-  .playlist { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
-  .playlist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px; flex-wrap: wrap; }
-  .playlist-title { font-size: 1.1rem; font-weight: 600; }
-  .btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
-  .btn-group button, .dl-btn {
-    padding: 7px 14px; font-size: .85rem; border: none; border-radius: 6px;
-    cursor: pointer; white-space: nowrap;
-  }
-  .dl-btn { background: #1a73e8; color: #fff; }
-  .dl-btn:hover { background: #1557b0; }
-  .dl-btn:disabled { background: #999; cursor: not-allowed; }
-  .reset-btn { background: #fbbc04; color: #222; }
-  .reset-btn:hover { background: #e5a800; }
-  .del-btn { background: #ea4335; color: #fff; }
-  .del-btn:hover { background: #c62828; }
-  .video-list { list-style: none; }
-  .video-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 6px 0; border-bottom: 1px solid #eee;
-  }
-  .video-item:last-child { border-bottom: none; }
-  .video-item .indicator {
-    width: 22px; height: 22px; border-radius: 4px;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: .85rem; flex-shrink: 0; cursor: pointer; user-select: none;
-  }
-  .video-item .indicator.done { background: #34a853; color: #fff; }
-  .video-item .indicator.pending { background: #dadce0; }
-  .video-item .indicator.unavailable { background: #e8eaed; cursor: default; }
-  .video-item.unavailable { color: #999; font-style: italic; }
-  .error { color: #d93025; margin-bottom: 12px; }
-  .empty { color: #666; text-align: center; padding: 32px 0; }
-</style>
-</head>
-<body>
-<div class="container" id="app">
-  <h1>YouTube Playlist Downloader</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>YouTube Playlist Downloader</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #f5f5f5;
+        color: #222;
+        line-height: 1.5;
+        padding: 24px;
+      }
+      .container {
+        max-width: 720px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin-bottom: 16px;
+      }
+      .add-form {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+      }
+      .add-form input {
+        flex: 1;
+        padding: 10px 12px;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+      .add-form button,
+      .dl-btn {
+        padding: 10px 20px;
+        font-size: 1rem;
+        border: none;
+        border-radius: 6px;
+        background: #1a73e8;
+        color: #fff;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .add-form button:hover,
+      .dl-btn:hover {
+        background: #1557b0;
+      }
+      .add-form button:disabled,
+      .dl-btn:disabled {
+        background: #999;
+        cursor: not-allowed;
+      }
+      .playlist {
+        background: #fff;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .playlist-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .playlist-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+      .btn-group {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .btn-group button,
+      .dl-btn {
+        padding: 7px 14px;
+        font-size: 0.85rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .dl-btn {
+        background: #1a73e8;
+        color: #fff;
+      }
+      .dl-btn:hover {
+        background: #1557b0;
+      }
+      .dl-btn:disabled {
+        background: #999;
+        cursor: not-allowed;
+      }
+      .reset-btn {
+        background: #fbbc04;
+        color: #222;
+      }
+      .reset-btn:hover {
+        background: #e5a800;
+      }
+      .del-btn {
+        background: #ea4335;
+        color: #fff;
+      }
+      .del-btn:hover {
+        background: #c62828;
+      }
+      .video-list {
+        list-style: none;
+      }
+      .video-item {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 0;
+        border-bottom: 1px solid #eee;
+      }
+      .video-item:last-child {
+        border-bottom: none;
+      }
+      .video-item > span {
+        grid-column: 2;
+      }
+      .video-item .indicator {
+        grid-column: 1;
+        width: 22px;
+        height: 22px;
+        border-radius: 4px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+        cursor: pointer;
+        user-select: none;
+        border: none;
+        font: inherit;
+        padding: 0;
+      }
+      .video-item .indicator.done {
+        background: #34a853;
+        color: #fff;
+      }
+      .video-item .indicator.pending {
+        background: #dadce0;
+      }
+      .video-item .indicator.unavailable {
+        background: #e8eaed;
+        cursor: not-allowed;
+      }
+      .video-item .indicator.error {
+        background: #d93025;
+        color: #fff;
+      }
+      .video-item.unavailable {
+        color: #999;
+        font-style: italic;
+      }
+      .video-item .indicator.error {
+        background: #d93025;
+        color: #fff;
+        cursor: pointer;
+      }
+      .video-item.error {
+        color: #d93025;
+      }
+      .error-msg {
+        grid-column: 2;
+        font-size: 0.8rem;
+        color: #d93025;
+      }
+      .error {
+        color: #d93025;
+      }
+      .empty {
+        color: #666;
+        text-align: center;
+        padding: 32px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" id="app">
+      <h1>YouTube Playlist Downloader</h1>
 
-  <div class="add-form">
-    <input type="text" id="urlInput" placeholder="e.g. https://youtube.com/playlist?list=PL...">
-    <button id="addBtn">Add Playlist</button>
-  </div>
+      <div class="add-form">
+        <input
+          type="text"
+          id="urlInput"
+          placeholder="e.g. https://youtube.com/playlist?list=PL..."
+        />
+        <button id="addBtn">Add Playlist</button>
+      </div>
 
-  <div id="error" class="error"></div>
-  <div id="playlists"></div>
-</div>
+      <div id="error" class="error"></div>
+      <div id="playlists"></div>
+    </div>
 
-<script>
-const urlInput = document.getElementById("urlInput");
-const addBtn = document.getElementById("addBtn");
-const errorEl = document.getElementById("error");
-const playlistsEl = document.getElementById("playlists");
+    <script>
+      const urlInput = document.getElementById("urlInput");
+      const addBtn = document.getElementById("addBtn");
+      const errorEl = document.getElementById("error");
+      const playlistsEl = document.getElementById("playlists");
 
-async function loadPlaylists() {
-  const res = await fetch("/api/playlists");
-  return await res.json();
-}
+      async function loadPlaylists() {
+        const res = await fetch("/api/playlists");
+        return await res.json();
+      }
 
-function renderPlaylists(playlists) {
-  if (playlists.length === 0) {
-    playlistsEl.innerHTML = `<div class="empty">No playlists added yet.</div>`;
-    return;
-  }
+      function renderPlaylists(playlists) {
+        if (playlists.length === 0) {
+          playlistsEl.innerHTML = `<div class="empty">No playlists added yet.</div>`;
+          return;
+        }
 
-  playlistsEl.innerHTML = playlists.map(p => {
-    const availableCount = p.videos.filter(v => !v.downloaded && isAvailable(v)).length;
-    return `
+        playlistsEl.innerHTML = playlists
+          .map((p) => {
+            const availableCount = p.videos.filter((v) => !v.downloaded && isAvailable(v)).length;
+            return `
     <div class="playlist" data-id="${p.id}">
       <div class="playlist-header">
         <span class="playlist-title">${esc(p.title)}</span>
@@ -109,182 +246,203 @@ function renderPlaylists(playlists) {
         </div>
       </div>
       <ul class="video-list">
-        ${p.videos.map(v => {
-          const unavailable = !isAvailable(v);
-          const indicatorClass = unavailable ? 'unavailable' : (v.downloaded ? 'done' : 'pending');
-          const label = unavailable ? '—' : (v.downloaded ? '✓' : '');
-          const titleSuffix = v.status === 'private' ? ' (Private)' : v.status === 'deleted' ? ' (Deleted)' : '';
-          return `
-          <li class="video-item ${unavailable ? 'unavailable' : ''}">
-            <span class="indicator ${indicatorClass}"
-                  ${unavailable ? '' : `data-action="toggle" data-playlist="${p.id}" data-video="${v.videoId}"`}>
+        ${p.videos
+          .map((v) => {
+            const isErr = v.status === "error";
+            const unavailable = !isAvailable(v) && !isErr;
+            const indicatorClass = isErr
+              ? "error"
+              : unavailable
+                ? "unavailable"
+                : v.downloaded
+                  ? "done"
+                  : "pending";
+            const label = isErr ? "!" : unavailable ? "—" : v.downloaded ? "✓" : "";
+            const titleSuffix =
+              v.status === "private" ? " (Private)" : v.status === "deleted" ? " (Deleted)" : "";
+            return `
+          <li class="video-item ${isErr ? "error" : unavailable ? "unavailable" : ""}">
+            <button class="indicator ${indicatorClass}"
+                    data-action="toggle" data-playlist="${p.id}" data-video="${v.videoId}"
+                    ${unavailable ? "disabled" : ""}>
               ${label}
-            </span>
+            </button>
             <span>${esc(v.title)}${titleSuffix}</span>
+            ${isErr && v.errorMessage ? `<div class="error-msg">${esc(v.errorMessage)}</div>` : ""}
           </li>`;
-        }).join("")}
+          })
+          .join("")}
       </ul>
     </div>`;
-  }).join("");
+          })
+          .join("");
 
-  attachListeners();
-}
-
-function attachListeners() {
-  document.querySelectorAll("[data-action='download']").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const pid = btn.dataset.id;
-      btn.disabled = true;
-      btn.textContent = "Downloading...";
-      errorEl.textContent = "";
-
-      // Poll for progress updates (reads downloaded flags from server
-      // which are saved after each individual video completes)
-      const poll = setInterval(async () => {
-        try {
-          await updateProgress(pid);
-        } catch {}
-      }, 2000);
-
-      try {
-        const res = await fetch(`/api/playlists/${pid}/download`, { method: "POST" });
-        if (!res.ok) throw new Error(await res.text());
-      } catch (e) {
-        errorEl.textContent = `Download failed: ${e.message}`;
+        attachListeners();
       }
 
-      clearInterval(poll);
-      await refresh();
-    });
-  });
+      function attachListeners() {
+        document.querySelectorAll("[data-action='download']").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const pid = btn.dataset.id;
+            btn.disabled = true;
+            btn.textContent = "Downloading...";
+            errorEl.textContent = "";
 
-  document.querySelectorAll("[data-action='delete']").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const pid = btn.dataset.id;
-      if (!confirm(`Delete "${btn.closest('.playlist').querySelector('.playlist-title').textContent}"?`)) return;
-      try {
-        const res = await fetch(`/api/playlists/${pid}`, { method: "DELETE" });
-        if (!res.ok) throw new Error(await res.text());
-      } catch (e) {
-        errorEl.textContent = `Delete failed: ${e.message}`;
-      }
-      await refresh();
-    });
-  });
+            // Poll for progress updates (reads downloaded flags from server
+            // which are saved after each individual video completes)
+            const poll = setInterval(async () => {
+              try {
+                await updateProgress(pid);
+              } catch {}
+            }, 2000);
 
-  document.querySelectorAll("[data-action='reset']").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const pid = btn.dataset.id;
-      try {
-        const res = await fetch(`/api/playlists/${pid}/videos`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ downloaded: false }),
+            try {
+              const res = await fetch(`/api/playlists/${pid}/download`, { method: "POST" });
+              if (!res.ok) throw new Error(await res.text());
+            } catch (e) {
+              errorEl.textContent = `Download failed: ${e.message}`;
+            }
+
+            clearInterval(poll);
+            await refresh();
+          });
         });
-        if (!res.ok) throw new Error(await res.text());
-      } catch (e) {
-        errorEl.textContent = `Reset failed: ${e.message}`;
+
+        document.querySelectorAll("[data-action='delete']").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const pid = btn.dataset.id;
+            if (
+              !confirm(
+                `Delete "${btn.closest(".playlist").querySelector(".playlist-title").textContent}"?`,
+              )
+            )
+              return;
+            try {
+              const res = await fetch(`/api/playlists/${pid}`, { method: "DELETE" });
+              if (!res.ok) throw new Error(await res.text());
+            } catch (e) {
+              errorEl.textContent = `Delete failed: ${e.message}`;
+            }
+            await refresh();
+          });
+        });
+
+        document.querySelectorAll("[data-action='reset']").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const pid = btn.dataset.id;
+            try {
+              const res = await fetch(`/api/playlists/${pid}/videos`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ downloaded: false }),
+              });
+              if (!res.ok) throw new Error(await res.text());
+            } catch (e) {
+              errorEl.textContent = `Reset failed: ${e.message}`;
+            }
+            await refresh();
+          });
+        });
+
+        document.querySelectorAll("[data-action='toggle']").forEach((el) => {
+          el.addEventListener("click", async () => {
+            const pid = el.dataset.playlist;
+            const vid = el.dataset.video;
+            try {
+              const res = await fetch(`/api/playlists/${pid}/videos/${vid}`, { method: "PATCH" });
+              if (!res.ok) throw new Error(await res.text());
+            } catch (e) {
+              errorEl.textContent = `Toggle failed: ${e.message}`;
+            }
+            await refresh();
+          });
+        });
       }
-      await refresh();
-    });
-  });
 
-  document.querySelectorAll("[data-action='toggle']").forEach(el => {
-    el.addEventListener("click", async () => {
-      const pid = el.dataset.playlist;
-      const vid = el.dataset.video;
-      try {
-        const res = await fetch(`/api/playlists/${pid}/videos/${vid}`, { method: "PATCH" });
-        if (!res.ok) throw new Error(await res.text());
-      } catch (e) {
-        errorEl.textContent = `Toggle failed: ${e.message}`;
+      function isAvailable(v) {
+        return !v.status || v.status === "available";
       }
-      await refresh();
-    });
-  });
-}
 
-function isAvailable(v) {
-  return !v.status || v.status === "available";
-}
+      // During a bulk download, poll the server and update indicator DOM
+      // in-place without a full re-render (so the download handler stays alive).
+      async function updateProgress(pid) {
+        const playlists = await loadPlaylists();
+        const pl = playlists.find((p) => p.id === pid);
+        if (!pl) return;
 
-// During a bulk download, poll the server and update indicator DOM
-// in-place without a full re-render (so the download handler stays alive).
-async function updateProgress(pid) {
-  const playlists = await loadPlaylists();
-  const pl = playlists.find(p => p.id === pid);
-  if (!pl) return;
+        pl.videos.forEach((v) => {
+          const el = document.querySelector(
+            `[data-action="toggle"][data-playlist="${pid}"][data-video="${v.videoId}"]`,
+          );
+          if (!el) return;
+          if (v.downloaded) {
+            el.className = "indicator done";
+            el.textContent = "✓";
+          } else if (v.status === "error") {
+            el.className = "indicator error";
+            el.textContent = "!";
+          } else if (!isAvailable(v)) {
+            el.className = "indicator unavailable";
+            el.textContent = "—";
+          } else {
+            el.className = "indicator pending";
+            el.textContent = "";
+          }
+        });
 
-  pl.videos.forEach(v => {
-    const el = document.querySelector(
-      `[data-action="toggle"][data-playlist="${pid}"][data-video="${v.videoId}"]`,
-    );
-    if (!el) return;
-    if (v.downloaded) {
-      el.className = "indicator done";
-      el.textContent = "✓";
-    } else if (!isAvailable(v)) {
-      el.className = "indicator unavailable";
-      el.textContent = "—";
-    } else {
-      el.className = "indicator pending";
-      el.textContent = "";
-    }
-  });
+        const btn = document.querySelector(`[data-action="download"][data-id="${pid}"]`);
+        if (btn) {
+          const remaining = pl.videos.filter((v) => !v.downloaded && isAvailable(v)).length;
+          if (remaining > 0) {
+            btn.textContent = `Downloading... (${remaining} left)`;
+          } else {
+            btn.textContent = `Downloading... (finishing)`;
+          }
+        }
+      }
 
-  const btn = document.querySelector(`[data-action="download"][data-id="${pid}"]`);
-  if (btn) {
-    const remaining = pl.videos.filter(v => !v.downloaded && isAvailable(v)).length;
-    if (remaining > 0) {
-      btn.textContent = `Downloading... (${remaining} left)`;
-    } else {
-      btn.textContent = `Downloading... (finishing)`;
-    }
-  }
-}
+      function esc(s) {
+        const d = document.createElement("div");
+        d.textContent = s;
+        return d.innerHTML;
+      }
 
-function esc(s) {
-  const d = document.createElement("div");
-  d.textContent = s;
-  return d.innerHTML;
-}
+      async function refresh() {
+        try {
+          const playlists = await loadPlaylists();
+          renderPlaylists(playlists);
+        } catch (e) {
+          errorEl.textContent = `Failed to load playlists: ${e.message}`;
+        }
+      }
 
-async function refresh() {
-  try {
-    const playlists = await loadPlaylists();
-    renderPlaylists(playlists);
-  } catch (e) {
-    errorEl.textContent = `Failed to load playlists: ${e.message}`;
-  }
-}
+      addBtn.addEventListener("click", async () => {
+        const url = urlInput.value.trim();
+        if (!url) return;
+        addBtn.disabled = true;
+        addBtn.textContent = "Adding...";
+        errorEl.textContent = "";
+        try {
+          const res = await fetch("/api/playlists", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url }),
+          });
+          if (!res.ok) throw new Error(await res.text());
+          urlInput.value = "";
+        } catch (e) {
+          errorEl.textContent = `Failed to add playlist: ${e.message}`;
+        }
+        addBtn.disabled = false;
+        addBtn.textContent = "Add Playlist";
+        await refresh();
+      });
 
-addBtn.addEventListener("click", async () => {
-  const url = urlInput.value.trim();
-  if (!url) return;
-  addBtn.disabled = true;
-  addBtn.textContent = "Adding...";
-  errorEl.textContent = "";
-  try {
-    const res = await fetch("/api/playlists", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    urlInput.value = "";
-  } catch (e) {
-    errorEl.textContent = `Failed to add playlist: ${e.message}`;
-  }
-  addBtn.disabled = false;
-  addBtn.textContent = "Add Playlist";
-  await refresh();
-});
+      urlInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") addBtn.click();
+      });
 
-urlInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") addBtn.click();
-});
-
-refresh();
-</script>
-</body>
+      refresh();
+    </script>
+  </body>
 </html>

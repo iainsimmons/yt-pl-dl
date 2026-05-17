@@ -19,10 +19,7 @@ export function extractPlaylistId(url: string): string | null {
   return match ? match[1] : null;
 }
 
-export async function fetchPlaylistTitle(
-  playlistId: string,
-  apiKey: string,
-): Promise<string> {
+export async function fetchPlaylistTitle(playlistId: string, apiKey: string): Promise<string> {
   const params = new URLSearchParams({
     part: "snippet",
     id: playlistId,

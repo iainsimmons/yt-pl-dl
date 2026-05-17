@@ -18,6 +18,7 @@ A Deno-powered web app that fetches YouTube playlists via the YouTube Data API v
 5. MP3 files are saved with the format `{PlaylistName}_{index:03d}_{Title}_{videoId}.mp3`. Spaces become underscores; other non-alphanumeric characters become hyphens; consecutive runs of hyphens/underscores collapse to a single underscore (e.g. `Select_Lectures_001_Deep_Learning_State_of_the_Art_2020_0VH1Lim8gL8.mp3`).
 6. You can also toggle the downloaded state manually, reset an entire playlist, or delete a playlist.
 7. Private and deleted videos are detected automatically from the YouTube API response and marked with `"status": "private"` or `"status": "deleted"` — they are grayed out in the UI, skipped during download, and cannot be toggled.
+8. If `yt-dlp` fails to download a video (e.g. age restriction, geo-block, or the video was removed after the playlist was fetched), the video is marked with `"status": "error"` and an `"errorMessage"` describing the failure. Error videos show an orange `!` indicator with the error message below the title. They are excluded from "Download All" but can be toggled individually to clear the error and retry.
 
 ## Project structure
 
@@ -101,7 +102,7 @@ Response (videos with `"status"` omitted are available; private/deleted videos a
 }
 ```
 
-A playlist containing unavailable videos will include the `status` field:
+A playlist containing unavailable or failed videos will include the `status` field:
 
 ```json
 {
@@ -109,7 +110,8 @@ A playlist containing unavailable videos will include the `status` field:
   "title": "Children's class",
   "videos": [
     { "videoId": "xkeNAqvwQeA", "title": "Private video", "downloaded": false, "status": "private" },
-    { "videoId": "sFjycoXZPMI", "title": "Deleted video", "downloaded": false, "status": "deleted" }
+    { "videoId": "sFjycoXZPMI", "title": "Deleted video", "downloaded": false, "status": "deleted" },
+    { "videoId": "abc123def45", "title": "Some Song", "downloaded": false, "status": "error" }
   ]
 }
 ```
@@ -132,7 +134,7 @@ Toggle a single video's download status back to not-downloaded:
 curl -X PATCH http://localhost:8000/api/playlists/PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf/videos/0VH1Lim8gL8
 ```
 
-Trying to toggle a private or deleted video returns an error and is ignored by the UI:
+Trying to toggle a private, deleted, or error-status video returns an error and is ignored by the UI:
 
 ```bash
 curl -X PATCH http://localhost:8000/api/playlists/PLYn1ziFYjknf1b2hIM9I0739K6L_YiSlC/videos/xkeNAqvwQeA

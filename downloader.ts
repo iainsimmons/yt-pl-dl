@@ -1,14 +1,19 @@
-export type VideoStatus = "available" | "private" | "deleted";
+export type VideoStatus = "available" | "private" | "deleted" | "error";
 
 export interface VideoEntry {
   videoId: string;
   title: string;
   downloaded: boolean;
   status?: VideoStatus;
+  errorMessage?: string;
 }
 
 export function isAvailable(v: VideoEntry): boolean {
   return !v.status || v.status === "available";
+}
+
+export function canToggle(v: VideoEntry): boolean {
+  return isAvailable(v) || v.status === "error";
 }
 
 export interface PlaylistEntry {
@@ -48,9 +53,7 @@ export async function loadState(): Promise<PlaylistEntry[]> {
   }
 }
 
-export async function saveState(
-  playlists: PlaylistEntry[],
-): Promise<void> {
+export async function saveState(playlists: PlaylistEntry[]): Promise<void> {
   await Deno.writeTextFile(STATE_FILE, JSON.stringify(playlists, null, 2));
 }
 
@@ -59,7 +62,7 @@ export async function downloadVideo(
   title: string,
   playlistTitle: string,
   index: number,
-): Promise<boolean> {
+): Promise<{ success: boolean; errorMessage?: string }> {
   const downloadsDir = `${Deno.env.get("HOME")}/Downloads`;
   const url = `https://www.youtube.com/watch?v=${videoId}`;
   const outputName = buildFilename(playlistTitle, title, videoId, index);
@@ -77,14 +80,23 @@ export async function downloadVideo(
       url,
     ],
     stdout: "inherit",
-    stderr: "inherit",
+    stderr: "piped",
   });
 
   try {
-    const { success } = await cmd.output();
-    return success;
+    const { success, stderr } = await cmd.output();
+    if (success) return { success: true };
+    const msg = new TextDecoder()
+      .decode(stderr)
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith("[") && !l.startsWith("WARNING"))
+      .slice(-2)
+      .join("; ");
+    return { success: false, errorMessage: msg || "yt-dlp failed" };
   } catch (e) {
-    console.error(`Download failed for ${title}:`, e);
-    return false;
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error(`Download failed for ${title}:`, msg);
+    return { success: false, errorMessage: msg };
   }
 }
